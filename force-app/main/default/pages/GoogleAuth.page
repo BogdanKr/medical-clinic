@@ -1,0 +1,11 @@
+<!--
+ - Created by Bogdan_Krasun on 20.12.2022.
+ -->
+
+<apex:page id="GoogleAuth" controller="GoogleAuthService" action="{!callAuth}">
+    <apex:form>
+        <apex:commandButton action="{!callAuth}" value="callAuth"/>
+        <apex:outputText value="{!code}" escape="false"/>
+    </apex:form>
+
+</apex:page>

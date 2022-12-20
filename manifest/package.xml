@@ -13,5 +13,14 @@
         <members>Medical_Clinic_UtilityBar</members>
         <name>FlexiPage</name>
     </types>
+    <types>
+        <members>GoogleAuthService</members>
+        <members>MetadataService</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>GoogleAuth</members>
+        <name>ApexPage</name>
+    </types>
     <version>56.0</version>
 </Package>
