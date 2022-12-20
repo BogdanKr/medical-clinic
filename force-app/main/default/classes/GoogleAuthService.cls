@@ -3,15 +3,14 @@
  */
 
 public with sharing class GoogleAuthService {
-//API Secret Key
-    private static final String CLIENT_ID = '1009978681859-atp194qhmd4qvifm08hdvujr74j2i4a2.apps.googleusercontent.com';//ClientId
-    //API Secret
+    //ClientId
+    private static final String CLIENT_ID = '1009978681859-atp194qhmd4qvifm08hdvujr74j2i4a2.apps.googleusercontent.com';
     private static final String SECRET_ID = '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';
-    //API Redirect. Use your Lightning Tab or Lightning community URL
+
     private static final String REDIRECT_CLINIC = 'https://appointment-dev-ed.develop.lightning.force.com/lightning/n/Medical_Clinic';
     private static final String REDIRECT_URL = 'https://appointment-dev-ed--c.develop.vf.force.com/apex/GoogleAuth';
     private static final String AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-    private static final String SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+    private static final String SCOPE_EVENTS = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
     private static final String TOKEN_URL = 'https://accounts.google.com/o/oauth2/token';
 
     public static String CODE;
@@ -21,6 +20,7 @@ public with sharing class GoogleAuthService {
             System.debug('code ===> ' + ApexPages.currentPage().getParameters().get('code'));
             CODE = ApexPages.currentPage().getParameters().get('code');
 //            return new PageReference('https://appointment-dev-ed.develop.lightning.force.com/lightning/n/Medical_Clinic');
+           System.debug('AuthCode ==> ' + CODE);
             getAccessToken(CODE);
             return null;
         } else {
@@ -35,7 +35,7 @@ public with sharing class GoogleAuthService {
         authuri = AUTH_URL + '?' +
                 'client_id=' + key +
                 '&response_type=code' +
-                '&scope=' + SCOPE +
+                '&scope=' + SCOPE_EVENTS +
                 '&redirect_uri=' + uri +
                 '&access_type=offline' +
                 '&prompt=consent';
@@ -64,11 +64,12 @@ public with sharing class GoogleAuthService {
         responseText = response.getBody();
         System.debug('responseText:' + responseText);
         Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseText) ;
-        String token = String.valueOf(responseMap.get('access_token'));
-        System.debug('token:' + token);
+        String accessToken = String.valueOf(responseMap.get('access_token'));
+        String refreshToken = String.valueOf(responseMap.get('refresh_token'));
+        System.debug('accessToken:' + accessToken);
 
-        //Update token in custom metadata
-//        MetadataService.UpdateCustomMetadata(token);
+//        Create token in custom metadata
+        MetadataService.createCustomMetadata('James.Black.doc@gmail.com', 'James Black', accessToken, refreshToken);
         return true;
     }
 
@@ -104,7 +105,7 @@ public with sharing class GoogleAuthService {
         System.debug('token:' + token);
 
         //Update token in custom metadata
-        MetadataService.UpdateCustomMetadata(token);
+        MetadataService.updateCustomMetadata(token);
         return true;
     }
 }
