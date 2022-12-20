@@ -14,18 +14,28 @@ public with sharing class GoogleCalendarService {
         getPrimaryCalendar(response);
     }
 
-    private static HttpResponse makeGetRequest(String docEmail, String endpoint){
+    private static HttpResponse makeGetRequest(String docEmail, String endpoint) {
+        Boolean isTokenRefreshed = false;
         GoogleAuthSetting__mdt tokenMetadata = [
-                SELECT Id, Doctor_email__c, AccessToken__c, Expiration_Time__c
+                SELECT Doctor_email__c, RefreshToken__c, DeveloperName, Label, Client_Id__c, Client_Secret__c,
+                        Expiration_Time__c, AccessToken__c
                 FROM GoogleAuthSetting__mdt
                 WHERE Doctor_email__c = :docEmail
         ];
-        System.debug('token time = ' +tokenMetadata.Expiration_Time__c );
-        System.debug('system  time = ' +System.now() );
-        if (tokenMetadata.Expiration_Time__c < System.now()) {
-            throw new IllegalArgumentException('Token has been expired');
-        }
+        System.debug('token time = ' + tokenMetadata.Expiration_Time__c);
+        System.debug('system  time = ' + System.now());
         String access_token = tokenMetadata.AccessToken__c;
+        if (tokenMetadata.Expiration_Time__c < System.now()) {
+            System.debug('Token has been expired');
+//            ChainingAsynchronousCallouts.LONG_RUNNING_SERVICE_URL1 = GoogleAuthService.TOKEN_URL;
+//            ChainingAsynchronousCallouts.LONG_RUNNING_SERVICE_URL2 = endpoint;
+//            ChainingAsynchronousCallouts.DOC_EMAIL = docEmail;
+//            access_token = [SELECT AccessToken__c FROM GoogleAuthSetting__mdt WHERE Doctor_email__c = :docEmail].AccessToken__c;
+//            new ChainingAsynchronousCallouts().invokeInitialRequest();
+//            return ChainingAsynchronousCallouts.result2;
+            access_token = GoogleAuthService.refreshAccessToken(docEmail);
+            isTokenRefreshed = true;
+        }
         Http http = new Http();
         HttpRequest request = new HttpRequest();
         request.setMethod('GET');
@@ -33,16 +43,20 @@ public with sharing class GoogleCalendarService {
         request.setHeader('content-type', 'application/json');
         request.setHeader('Authorization', 'Bearer ' + access_token);
         HttpResponse response = http.send(request);
+        if (isTokenRefreshed) {
+            //Update token in custom metadata
+            MetadataService.updateCustomMetadata(tokenMetadata, access_token);
+        }
         return response;
     }
 
-    private static CalendarWrapper getPrimaryCalendar (HttpResponse response){
+    private static CalendarWrapper getPrimaryCalendar(HttpResponse response) {
         if (response.getStatusCode() == 200) {
             CalendarListWrapper result = (CalendarListWrapper) JSON.deserialize(response.getBody(), CalendarListWrapper.class);
             System.debug('result = ' + result);
             List <CalendarWrapper> calList = result.items;
-            for (CalendarWrapper cal: calList ){
-                if (cal.primary == true){
+            for (CalendarWrapper cal : calList) {
+                if (cal.primary == true) {
                     System.debug('Summary = ' + cal.summary + ' Id = ' + cal.id);
                     return cal;
                 }
