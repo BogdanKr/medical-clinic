@@ -16,11 +16,19 @@
     <types>
         <members>GoogleAuthService</members>
         <members>MetadataService</members>
+        <members>GoogleCalendarService</members>
         <name>ApexClass</name>
     </types>
     <types>
         <members>GoogleAuth</members>
         <name>ApexPage</name>
+    </types>
+    <types>
+        <members>GoogleAuthSetting__mdt</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <name>CustomField</name>
     </types>
     <version>56.0</version>
 </Package>

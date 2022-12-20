@@ -3,9 +3,4 @@
  -->
 
 <apex:page id="GoogleAuth" controller="GoogleAuthService" action="{!callAuth}">
-    <apex:form>
-        <apex:commandButton action="{!callAuth}" value="callAuth"/>
-        <apex:outputText value="{!code}" escape="false"/>
-    </apex:form>
-
 </apex:page>
