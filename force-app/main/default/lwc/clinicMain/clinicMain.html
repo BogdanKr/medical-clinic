@@ -1,0 +1,35 @@
+<!--
+ - Created by Bogdan_Krasun on 21.12.2022.
+ -->
+
+<!-- Clinic Main -->
+<template>
+    <lightning-layout multiple-rows>
+        <!-- Top -->
+        <lightning-layout-item size="12">
+            <lightning-card title="Choose Specialization">
+                <!-- New specialization button goes here -->
+                <div slot="actions">
+                    <lightning-button variant="brand" label="New Specialization" onclick={createNewBoat}
+                                      class="slds-m-left_x-small"></lightning-button>
+                    <lightning-button variant="brand" label="View All Doctors" onclick={createNewBoat}
+                                      class="slds-m-left_x-small"></lightning-button>
+                </div>
+                <p class="slds-var-p-horizontal_small">
+                    <!-- Specialization list component goes here -->
+                    <c-specialization-list onsearch={searchDoctors}></c-specialization-list>
+                </p>
+            </lightning-card>
+        </lightning-layout-item>
+        <!-- Bottom -->
+        <lightning-layout-item size="12" class="slds-p-top_small slds-is-relative">
+            <!-- Spinner goes here -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading" variant="brand"></lightning-spinner>
+            </template>
+            <!-- doctorSearchResults goes here -->
+            <c-doctor-search-results onloading={handleLoading}
+                                     ondoneloading={handleDoneLoading}></c-doctor-search-results>
+        </lightning-layout-item>
+    </lightning-layout>
+</template>

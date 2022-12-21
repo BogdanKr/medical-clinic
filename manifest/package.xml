@@ -17,6 +17,7 @@
         <members>GoogleAuthService</members>
         <members>MetadataService</members>
         <members>GoogleCalendarService</members>
+        <members>DoctorDataService</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -25,10 +26,39 @@
     </types>
     <types>
         <members>GoogleAuthSetting__mdt</members>
+        <members>Specialization__c</members>
         <name>CustomObject</name>
     </types>
     <types>
+        <members>Activity.Client__c</members>
+        <members>Contact.Specialization__c</members>
         <name>CustomField</name>
+    </types>
+    <types>
+        <members>clinicMain</members>
+        <members>specializationList</members>
+        <members>doctorSearchResults</members>
+        <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>Contract-Contract Layout</members>
+        <members>Event-Event Layout</members>
+        <members>Contact-Contact %28Clients%29 Layout</members>
+        <members>Contact-Contact %28Doctors%29 Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
+        <members>Admin</members>
+        <name>Profile</name>
+    </types>
+    <types>
+        <members>accounts_google</members>
+        <members>googleapis</members>
+        <name>RemoteSiteSetting</name>
+    </types>
+    <types>
+        <members>EventSubject</members>
+        <name>StandardValueSet</name>
     </types>
     <version>56.0</version>
 </Package>
