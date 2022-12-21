@@ -17,7 +17,6 @@
         <members>GoogleAuthService</members>
         <members>MetadataService</members>
         <members>GoogleCalendarService</members>
-        <members>ChainingAsynchronousCallouts</members>
         <name>ApexClass</name>
     </types>
     <types>

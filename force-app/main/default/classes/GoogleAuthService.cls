@@ -56,18 +56,14 @@ public with sharing class GoogleAuthService {
                 '&grant_type=authorization_code';
         req.setHeader('Content-length', String.valueOf(messageBody.length()));
         req.setBody(messageBody);
-        req.setTimeout(60 * 1000);
-        System.debug('messageBody:' + messageBody);
 
         Http http = new Http();
         String responseText;
         HttpResponse response = http.send(req);
         responseText = response.getBody();
-        System.debug('responseText:' + responseText);
         Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseText) ;
         String accessToken = String.valueOf(responseMap.get('access_token'));
         String refreshToken = String.valueOf(responseMap.get('refresh_token'));
-        System.debug('accessToken:' + accessToken);
 
 //        Create token in custom metadata
         MetadataService.createCustomMetadata('James.Black.doc@gmail.com', 'James Black', accessToken, refreshToken);
@@ -89,25 +85,18 @@ public with sharing class GoogleAuthService {
                 '&grant_type=refresh_token';
         req.setHeader('Content-length', String.valueOf(messageBody.length()));
         req.setBody(messageBody);
-//        req.setTimeout(60 * 1000);
-        System.debug('messageBody:' + messageBody);
 
         Http http = new Http();
         String responseText;
         HttpResponse response = http.send(req);
         responseText = response.getBody();
-        System.debug('responseText:' + responseText);
         Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseText) ;
         String token = String.valueOf(responseMap.get('access_token'));
-        System.debug('token:' + token);
-
-        //Update token in custom metadata
-//        MetadataService.updateCustomMetadata(docAuthData, token);
         return token;
     }
 
 
-    public static GoogleAuthSetting__mdt getDocAuthMetadata(String email) {
+    private static GoogleAuthSetting__mdt getDocAuthMetadata(String email) {
         return [
                 SELECT Doctor_email__c, RefreshToken__c, DeveloperName, Label, Client_Id__c,
                         Client_Secret__c, Expiration_Time__c, AccessToken__c
