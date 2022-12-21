@@ -6,7 +6,7 @@ public with sharing class DoctorDataService {
 
     @AuraEnabled(Cacheable=true)
     public static List<Specialization__c> getSpecializations() {
-        return [SELECT Name, Id FROM BoatType__c WITH SECURITY_ENFORCED ORDER BY Name];
+        return [SELECT Name, Id, Appointment_price__c, Specialization_Image_URL__c FROM Specialization__c WITH SECURITY_ENFORCED ORDER BY Name];
     }
 
     @AuraEnabled(Cacheable=true)

@@ -27,6 +27,7 @@
     <types>
         <members>GoogleAuthSetting__mdt</members>
         <members>Specialization__c</members>
+        <members>Contact</members>
         <name>CustomObject</name>
     </types>
     <types>
@@ -38,6 +39,7 @@
         <members>clinicMain</members>
         <members>specializationList</members>
         <members>doctorSearchResults</members>
+        <members>specializationCard</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
@@ -45,6 +47,7 @@
         <members>Event-Event Layout</members>
         <members>Contact-Contact %28Clients%29 Layout</members>
         <members>Contact-Contact %28Doctors%29 Layout</members>
+        <members>Contact-Contact Layout</members>
         <name>Layout</name>
     </types>
     <types>
@@ -59,6 +62,13 @@
     <types>
         <members>EventSubject</members>
         <name>StandardValueSet</name>
+    </types>
+    <types>
+        <members>DoctorPhotos.resource-meta</members>
+        <members>Specializations.resource-meta</members>
+        <members>DoctorPhotos</members>
+        <members>Specializations</members>
+        <name>StaticResource</name>
     </types>
     <version>56.0</version>
 </Package>

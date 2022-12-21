@@ -4,4 +4,19 @@
 
 <!-- Specialization List -->
 <template>
+    <!-- layout horizontally aligned to the center  -->
+    <!-- layout allowing multiple rows -->
+    <lightning-layout horizontal-align='center' multiple-rows="true">
+        <!-- template looping through each specialization -->
+        <template for:each={boats.data} for:item="boat">
+            <!-- lightning-layout-item for each specialization -->
+            <lightning-layout-item key={specialization.Id} padding="around-small" size="12" small-device-size=6
+                                   medium-device-size=4 large-device-size=3>
+                <!-- Each specialization goes here -->
+                <c-specialization-card specialization={specialization} selected-specialization-id={selectedSpecializationId}
+                                       onspecializationselect={handleChosenSpecialization}></c-specialization-card>
+
+            </lightning-layout-item>
+        </template>
+    </lightning-layout>
 </template>
