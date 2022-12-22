@@ -26,14 +26,18 @@ export default class ClinicMain extends LightningElement {
     }
 
     createNewSpecialization() {
+        console.log('trying to navigate');
         // Navigate to the Specialization home page
         this[NavigationMixin.Navigate]({
             type: 'standard__objectPage',
             attributes: {
-                objectApiName: 'Specialization__c',
+                objectApiName: 'Account',
                 actionName: 'new',
             },
         });
     }
 
+    resetDoctorList(){
+        this.template.querySelector('c-doctor-search-results').searchDoctors('');
+    }
 }

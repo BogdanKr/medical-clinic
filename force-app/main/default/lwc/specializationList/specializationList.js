@@ -7,10 +7,7 @@ import getSpecializations from '@salesforce/apex/DoctorDataService.getSpecializa
 
 export default class SpecializationList extends LightningElement {
     selectedSpecializationId = '';
-
-    // Private
     error = undefined;
-
     specializations;
 
     // Wire a custom Apex method
@@ -26,7 +23,7 @@ export default class SpecializationList extends LightningElement {
 
     // Fires event that specialization has been chosen.
     handleChosenSpecialization(event) {
-        this.selectedSpecializationId = event.detail.value;
+        this.selectedSpecializationId = event.detail.recordId;
         const searchEvent = new CustomEvent('search', {
             detail: { specializationId: this.selectedSpecializationId}
         });

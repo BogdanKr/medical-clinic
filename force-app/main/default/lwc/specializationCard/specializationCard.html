@@ -5,12 +5,12 @@
 <!-- Specialization Card -->
 <template>
 
-    <div onclick={selectSpecialization} class={tileClass}>
+    <div onclick={handleChosenSpecialization} onmouseenter={setClass} onmouseleave={setClass} class={tileClass}>
         <div style={backgroundStyle} class="tile"></div>
         <div class="lower-third">
             <!-- Specialization information goes here -->
             <h1 class="slds-truncate slds-text-heading_medium">{specialization.Name}</h1>
-            <div class=slds-text-body_small>
+            <div class=slds-text-body_small> Appointment price :
                 <lightning-formatted-number value={specialization.Appointment_price__c}
                                             maximum-fraction-digits="2"></lightning-formatted-number>
             </div>

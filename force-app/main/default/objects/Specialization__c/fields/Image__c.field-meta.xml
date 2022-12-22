@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Specialization_Image__c</fullName>
+    <fullName>Image__c</fullName>
     <externalId>false</externalId>
-    <formula>IMAGE(   Specialization_Image_URL__c  , Name )</formula>
+    <formula>IMAGE(   Image_Url__c  , Name )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
-    <label>Specialization Image</label>
+    <label>Image</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Text</type>

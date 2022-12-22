@@ -8,14 +8,13 @@
     <!-- layout allowing multiple rows -->
     <lightning-layout horizontal-align='center' multiple-rows="true">
         <!-- template looping through each specialization -->
-        <template for:each={boats.data} for:item="boat">
+        <template for:each={specializations} for:item="specialization">
             <!-- lightning-layout-item for each specialization -->
             <lightning-layout-item key={specialization.Id} padding="around-small" size="12" small-device-size=6
                                    medium-device-size=4 large-device-size=3>
-                <!-- Each specialization goes here -->
-                <c-specialization-card specialization={specialization} selected-specialization-id={selectedSpecializationId}
-                                       onspecializationselect={handleChosenSpecialization}></c-specialization-card>
-
+                <!-- Each specialization goes here... selected-specialization-id={selectedSpecializationId}-->
+                <c-record-card record={specialization}
+                               onrecordselect={handleChosenSpecialization}></c-record-card>
             </lightning-layout-item>
         </template>
     </lightning-layout>

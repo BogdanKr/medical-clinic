@@ -6,21 +6,19 @@ public with sharing class DoctorDataService {
 
     @AuraEnabled(Cacheable=true)
     public static List<Specialization__c> getSpecializations() {
-        return [SELECT Name, Id, Appointment_price__c, Specialization_Image_URL__c FROM Specialization__c WITH SECURITY_ENFORCED ORDER BY Name];
+        return [SELECT Name, Id, Appointment_price__c, Image_Url__c FROM Specialization__c WITH SECURITY_ENFORCED ORDER BY Name];
     }
 
     @AuraEnabled(Cacheable=true)
     public static List<Contact> getDoctors(String specializationId) {
         // Without an explicit boatTypeId, the full list is desired
-        String query = 'SELECT '
-                + 'Name, Description__c, Geolocation__Latitude__s, '
-                + 'Geolocation__Longitude__s, Picture__c, Contact__r.Name, '
-                + 'BoatType__c, BoatType__r.Name, Length__c, Price__c '
-                + 'FROM Contact';
+//        [SELECT id from Contact WHERE RecordType.DeveloperName = 'Doctor_Record_Type']
+        String query = 'SELECT Id, Name, Image_Url__c FROM Contact WHERE RecordType.DeveloperName = \'Doctor_Record_Type\'';
         if (String.isNotBlank(specializationId)) {
-            query += ' WHERE BoatType__c = :boatTypeId';
+            query += ' AND Specialization__c =:specializationId';
         }
         query += ' WITH SECURITY_ENFORCED ';
+        System.debug('query contact - ' + query);
         return Database.query(query);
     }
 

@@ -40,6 +40,7 @@
         <members>specializationList</members>
         <members>doctorSearchResults</members>
         <members>specializationCard</members>
+        <members>recordCard</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
@@ -69,6 +70,10 @@
         <members>DoctorPhotos</members>
         <members>Specializations</members>
         <name>StaticResource</name>
+    </types>
+    <types>
+        <members>DoctorMessageChannel</members>
+        <name>LightningMessageChannel</name>
     </types>
     <version>56.0</version>
 </Package>
