@@ -1,0 +1,32 @@
+<!--
+ - Created by Bogdan_Krasun on 22.12.2022.
+ -->
+
+<!-- Doctor Detail -->
+<template>
+    <template if:false={wiredRecord.data}>
+        <!-- lightning card for the label when wiredRecord has no data goes here  -->
+        <lightning-card>
+        <span class="slds-align_absolute-center no-boat-height">
+            Please select Doctor</span>
+        </lightning-card>
+    </template>
+    <template if:true={wiredRecord.data}>
+        <lightning-card title={doctorName} icon-name={detailsTabIconName}>
+            <lightning-record-view-form
+                    object-api-name="Contact"
+                    record-id={doctorId}
+                    density="compact">
+                <lightning-output-field
+                        field-name="Phone">
+                </lightning-output-field>
+                <lightning-output-field
+                        field-name="Email">
+                </lightning-output-field>
+                <lightning-output-field
+                        field-name="Description">
+                </lightning-output-field>
+            </lightning-record-view-form>
+        </lightning-card>
+    </template>
+</template>

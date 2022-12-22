@@ -3,9 +3,5 @@
     <apiVersion>56.0</apiVersion>
     <description>Doctor Search Results</description>
     <isExposed>true</isExposed>
-    <targets>
-        <target>lightning__RecordPage</target>
-        <target>lightning__AppPage</target>
-    </targets>
     <masterLabel>Doctor Search Results</masterLabel>
 </LightningComponentBundle>

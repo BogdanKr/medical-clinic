@@ -40,6 +40,9 @@
         <members>specializationList</members>
         <members>doctorSearchResults</members>
         <members>recordCard</members>
+        <members>doctorDetail</members>
+        <members>calendar</members>
+        <members>doctorCalendar</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>

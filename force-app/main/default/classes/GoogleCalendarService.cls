@@ -20,10 +20,13 @@ public with sharing class GoogleCalendarService {
         getPrimaryCalendar(response);
     }
 
-    public static void getEventsByPrimaryCalendar() {
-        String docEmail = 'James.Black.doc@gmail.com';
+    @AuraEnabled(Cacheable=true)
+    public static List<EventWrapper> getPrimaryCalendarEventsByDoctor(String doctorId) {
+        String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
+        docEmail = 'James.Black.doc@gmail.com';
         HttpResponse response = sendRequest(docEmail, ENDPOINT, GET_METHOD, null);
         System.debug('response =>' + response);
+        System.debug('response body = ' + response.getBody());
         if (response.getStatusCode() == 200) {
             String resultBody = response.getBody().substringAfter('"items": ');
             resultBody = resultBody.substringBeforeLast('}');
@@ -34,7 +37,9 @@ public with sharing class GoogleCalendarService {
                 System.debug('Summary - ' + event.summary + ', Start time - ' + event.start +
                         ', End time - ' + event.end_c + ', Attendees - ' + event.attendees);
             }
+            return result;
         }
+        throw new CalloutException('Events where not received');
     }
 
     public static void getEventById(String eventId) {
@@ -112,10 +117,14 @@ public with sharing class GoogleCalendarService {
 //        request.setHeader('Accept', 'application/json');
         request.setHeader('Authorization', 'Bearer ' + ACCESS_TOKEN);
         if (requestMethod.equals(POST_METHOD) || requestMethod.equals(PUT_METHOD)) {
-            System.debug('Request method - '  + requestMethod);
+            System.debug('Request method - ' + requestMethod);
             request.setBody(body);
         }
         HttpResponse response = http.send(request);
+        if (response.getStatusCode() == 401) {
+            System.debug('Bad request: ' + response.getBody());
+            throw new CalloutException('Invalid Credentials');
+        }
         if (IS_TOKEN_REFRESHED) {
             //Update token in custom metadata
             MetadataService.updateCustomMetadata(tokenMetadata, ACCESS_TOKEN);

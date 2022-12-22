@@ -32,7 +32,7 @@ export default class DoctorSearchResults extends LightningElement {
 
 
     updateSelectedTile(event) {
-        this.selectedDoctorId = event.detail.selectedDoctorId;
+        this.selectedDoctorId = event.detail.recordId;
         this.sendMessageService(this.selectedDoctorId);
     }
 
@@ -40,6 +40,7 @@ export default class DoctorSearchResults extends LightningElement {
     sendMessageService(selectedDoctorId) {
         // explicitly pass boatId to the parameter recordId
         const payload = {recordId: selectedDoctorId};
+        console.log('publishing message recId - ' + selectedDoctorId);
         publish(this.messageContext, DOCMC, payload);
     }
 

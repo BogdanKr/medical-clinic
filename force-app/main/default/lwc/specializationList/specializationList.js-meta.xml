@@ -3,9 +3,5 @@
     <apiVersion>56.0</apiVersion>
     <description>Specialization List</description>
     <isExposed>true</isExposed>
-    <targets>
-        <target>lightning__RecordPage</target>
-        <target>lightning__AppPage</target>
-    </targets>
     <masterLabel>Specialization List</masterLabel>
 </LightningComponentBundle>
