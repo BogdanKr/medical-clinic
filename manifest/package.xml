@@ -39,7 +39,6 @@
         <members>clinicMain</members>
         <members>specializationList</members>
         <members>doctorSearchResults</members>
-        <members>specializationCard</members>
         <members>recordCard</members>
         <name>LightningComponentBundle</name>
     </types>
