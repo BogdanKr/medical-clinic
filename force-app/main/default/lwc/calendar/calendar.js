@@ -4,6 +4,8 @@
 
 import {LightningElement, api, track} from 'lwc';
 import FullCalendarJS from '@salesforce/resourceUrl/fullcalendarv3';
+// import FullCalendarJS from '@salesforce/resourceUrl/FullCalendarJS';
+
 import {loadStyle, loadScript} from 'lightning/platformResourceLoader';
 import {ShowToastEvent} from 'lightning/platformShowToastEvent';
 
@@ -18,7 +20,15 @@ export default class Calendar extends LightningElement {
     }
 
     set events(value) {
+        console.log('setting events in calendar - ' + value);
+        // this.eventDataString = '';
         this._events = [...value];
+        value.forEach(v=> {
+            console.log('event.Id = ' + v.Id);
+            console.log('event.summary = ' + v.title);
+            console.log('event.start = ' + v.start);
+            console.log('event.end_c = ' + v.end);
+        });
     }
 
 
@@ -36,7 +46,6 @@ export default class Calendar extends LightningElement {
     }
 
     renderedCallback() {
-
         // Performs this operation only on first render
         if (this.jsInitialised) {
             return;
@@ -44,13 +53,19 @@ export default class Calendar extends LightningElement {
         this.jsInitialised = true;
 
         Promise.all([
+            loadStyle(this, FullCalendarJS + '/FullCalenderV3/fullcalendar.min.css'),
             loadScript(this, FullCalendarJS + '/FullCalenderV3/jquery.min.js'),
             loadScript(this, FullCalendarJS + '/FullCalenderV3/moment.min.js'),
             loadScript(this, FullCalendarJS + '/FullCalenderV3/fullcalendar.min.js'),
-            loadStyle(this, FullCalendarJS + '/FullCalenderV3/fullcalendar.min.css')
+            // loadScript(this, FullCalendarJS + "/FullCalendarJS/jquery.min.js"),
+            // loadScript(this, FullCalendarJS + "/FullCalendarJS/moment.min.js"),
+            // loadScript(this, FullCalendarJS + "/FullCalendarJS/fullcalendar.min.js"),
+            // loadStyle(this, FullCalendarJS + "/FullCalendarJS/fullcalendar.min.css"),
         ])
             .then(() => {
                 this.initialiseCalendarJs();
+                console.log('Initialize calendar!');
+                // this.events = '[{"title":"MY TEST!","start":"2022-12-23","end":"2022-12-18"}]';
             })
             .catch(error => {
                 alert(error);
@@ -62,8 +77,13 @@ export default class Calendar extends LightningElement {
             })
     }
 
+    renderEvents(){
+        console.log('Render events');
+        $(ele).fullCalendar('renderEvents', this.events, true);
+    }
+
     initialiseCalendarJs() {
-        var that = this;
+        let that = this;
         const ele = this.template.querySelector('div.fullcalendarjs');
         //Use jQuery to instantiate fullcalender JS
         $(ele).fullCalendar({
@@ -81,7 +101,7 @@ export default class Calendar extends LightningElement {
             droppable: true,
             weekNumbers: true,
             selectable: true,
-            //eventClick: this.eventClick,
+            // eventClick: this.eventClick,
             eventClick: function (info) {
                 const selectedEvent = new CustomEvent('eventclicked', {detail: info.Id});
                 // Dispatches the event.

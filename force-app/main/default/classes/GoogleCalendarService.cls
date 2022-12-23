@@ -22,8 +22,8 @@ public with sharing class GoogleCalendarService {
 
     @AuraEnabled(Cacheable=true)
     public static List<EventWrapper> getPrimaryCalendarEventsByDoctor(String doctorId) {
-        String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
-        docEmail = 'James.Black.doc@gmail.com';
+//        String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
+        String docEmail = 'James.Black.doc@gmail.com';
         HttpResponse response = sendRequest(docEmail, ENDPOINT, GET_METHOD, null);
         System.debug('response =>' + response);
         System.debug('response body = ' + response.getBody());
@@ -34,10 +34,11 @@ public with sharing class GoogleCalendarService {
                     List<EventWrapper>.class);
             System.debug('result = ' + result);
             for (EventWrapper event : result) {
-                System.debug('Summary - ' + event.summary + ', Start time - ' + event.start +
+                System.debug('ID= ' + event.id + 'Summary - ' + event.summary + ', Start time - ' + event.start +
                         ', End time - ' + event.end_c + ', Attendees - ' + event.attendees);
             }
             return result;
+//            return new List<EventWrapper>{result.get(0)};
         }
         throw new CalloutException('Events where not received');
     }
@@ -191,23 +192,37 @@ public with sharing class GoogleCalendarService {
     }
 
     public class EventWrapper {
-        public String kind;
-        public String id;
-        public String htmlLink;
-        public Datetime created;
-        public Datetime updated;
-        public String summary;
-        public String description;
-        public String location;
-        public DateTimeWrapper start;
-        public DateTimeWrapper end_c;
-        public String iCalUID;
-        public List<AttendeeWrapper> attendees;
+        @AuraEnabled
+        public String kind { get; }
+        @AuraEnabled
+        public String id { get; set; }
+        @AuraEnabled
+        public String htmlLink { get; }
+        @AuraEnabled
+        public Datetime created { get; }
+        @AuraEnabled
+        public Datetime updated { get; }
+        @AuraEnabled
+        public String summary { get; set; }
+        @AuraEnabled
+        public String description { get; set; }
+        @AuraEnabled
+        public String location { get; set; }
+        @AuraEnabled
+        public DateTimeWrapper start { get; set; }
+        @AuraEnabled
+        public DateTimeWrapper end_c { get; set; }
+        @AuraEnabled
+        public String iCalUID { get; }
+        @AuraEnabled
+        public List<AttendeeWrapper> attendees { get; set; }
     }
 
     public class DateTimeWrapper {
-        public Datetime dateTime_c;
-        public String timeZone;
+        @AuraEnabled
+        public Datetime dateTime_c { get; set; }
+        @AuraEnabled
+        public String timeZone { get; set; }
         DateTimeWrapper(Datetime dateTime_c, String timeZone) {
             this.dateTime_c = dateTime_c;
             this.timeZone = timeZone;
@@ -215,10 +230,14 @@ public with sharing class GoogleCalendarService {
     }
 
     public class AttendeeWrapper {
-        public String email;
-        public String displayName;
-        public Boolean self;
-        public String responseStatus;
+        @AuraEnabled
+        public String email { get; set; }
+        @AuraEnabled
+        public String displayName { get; set; }
+        @AuraEnabled
+        public Boolean self { get; set; }
+        @AuraEnabled
+        public String responseStatus { get; set; }
 
         AttendeeWrapper(String email, String displayName, Boolean self, String responseStatus) {
             this.email = email;

@@ -16,6 +16,7 @@ export default class DoctorCalendar extends LightningElement {
     startDate = new Date();
     @track
     endDate;
+    title;
     error;
     openModal = false;
     @track
@@ -29,16 +30,18 @@ export default class DoctorCalendar extends LightningElement {
         if (data) {
             //format as fullcalendar event object
             let records = data.map(event => {
-                console.log('event.Id = ' + event.Id);
-                console.log('event.summary = ' + event.summary);
-                console.log('event.start = ' + event.start);
-                console.log('event.end_c = ' + event.end_c);
+                // console.log('event.Id = ' + event.id);
+                // console.log('event.summary = ' + event.summary);
+                // console.log('event.start = ' + event.start.dateTime_c);
+                // console.log('event.end_c = ' + event.end_c.dateTime_c);
                 return {
-                    Id: event.Id,
+                    Id: event.id,
                     title: event.summary,
-                    start: event.start,
-                    end: event.end_c,
-                    allDay: event.IsAllDayEvent
+                    start: '2022-12-21T19:00:00',
+                    // start: event.start.dateTime_c,
+                    // end: event.end_c.dateTime_c,
+                    end: '2022-12-21T22:00:00',
+                    allDay: false
                 };
             });
             this.events = JSON.parse(JSON.stringify(records));
@@ -56,6 +59,34 @@ export default class DoctorCalendar extends LightningElement {
         }
     }
 
+    convertTime(m){
+        return m.getUTCFullYear() + "/" +
+            ("0" + (m.getUTCMonth() + 1)).slice(-2) + "/" +
+            ("0" + m.getUTCDate()).slice(-2) + "T" +
+            ("0" + m.getUTCHours()).slice(-2) + ":" +
+            ("0" + m.getUTCMinutes()).slice(-2) + ":" +
+            ("0" + m.getUTCSeconds()).slice(-2);
+    }
+    formatDate(date) {
+        return (
+            [
+                date.getFullYear(),
+                this.padTo2Digits(date.getMonth() + 1),
+                this.padTo2Digits(date.getDate()),
+            ].join('-') +
+            'T' +
+            [
+                this.padTo2Digits(date.getHours()),
+                this.padTo2Digits(date.getMinutes()),
+                this.padTo2Digits(date.getSeconds()),
+            ].join(':')
+        );
+    }
+    padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+
     handleEvent(event) {
         let id = event.detail;
         let task = this.events.find(x => x.Id = id);
@@ -63,7 +94,6 @@ export default class DoctorCalendar extends LightningElement {
         this.title = task.title;
         this.endDate = task.end;
         this.openModal = true;
-
     }
 
     handleCancel(event) {

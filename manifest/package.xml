@@ -43,6 +43,7 @@
         <members>doctorDetail</members>
         <members>calendar</members>
         <members>doctorCalendar</members>
+        <members>fullCalendar</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
