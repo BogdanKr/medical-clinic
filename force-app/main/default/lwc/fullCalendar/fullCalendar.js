@@ -160,8 +160,7 @@ export default class FullCalendar extends LightningElement {
     }
 
     //To save the event
-    handleSave(event) {
-        let events = this.events;
+    handleSave() {
         this.openSpinner = true;
 
         //get all the field values - as of now they all are mandatory to create a standard event
@@ -196,7 +195,6 @@ export default class FullCalendar extends LightningElement {
         //Server call to create the event
         upsertEvent({'obj': JSON.stringify(newEvent)})
             .then(result => {
-
                 //To populate the event on fullcalendar object
                 //Id should be unique and useful to remove the event from UI - calendar
                 newEvent.id = result;
@@ -216,21 +214,17 @@ export default class FullCalendar extends LightningElement {
                     console.log('new eventId 3- ' + newEvent.id + ' title - ' + newEvent.title);
                     console.log('new startTime ' + newEvent.start + ' endTime - ' + newEvent.end);
                     $(ele).fullCalendar('renderEvent', newEvent, true);
-
                     //To display on UI with id from server
                     this.events.push(newEvent);
                 }
                 //To close spinner and modal
                 this.openSpinner = false;
-
                 //show toast message
                 this.showNotification('Success!!', 'Your event has been logged', 'success');
-
             })
             .catch(error => {
                 console.log(error);
                 this.openSpinner = false;
-
                 //show toast message - TODO
                 this.showNotification('Oops', 'Something went wrong, please review console', 'error');
             })
@@ -246,7 +240,7 @@ export default class FullCalendar extends LightningElement {
         console.log('spinner is - ' + this.openSpinner);
         //delete the event from server and then remove from UI
         let eventId = event.target.value;
-        let removeObj = {id: this.eventId, doctorId: this.doctorId};
+        let removeObj = {id: eventId, doctorId: this.doctorId};
         console.log('removeObj id - ' + removeObj.id + ' doctorId - ' + removeObj.doctorId);
         deleteEvent({'removeObj': JSON.stringify(removeObj)})
             .then(result => {
@@ -267,7 +261,7 @@ export default class FullCalendar extends LightningElement {
                 console.log('catch error log - ' + error);
                 this.openSpinner = false;
                 this.openModal = false;
-
+                this.showNotification('Oops', 'Something went wrong, please review console', 'error');
             });
     }
 

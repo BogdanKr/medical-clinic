@@ -18,7 +18,7 @@
                 <div class="slds-clearfix">
                     <div class="slds-float_right">
                         <lightning-button icon-name="utility:add" slot="actions"
-                                          alternative-text="add" title="Add" size="small"
+                                          title="Add"
                                           class="slds-p-around_medium"
                                           label="Add Event"
                                           onclick={addEvent}>
@@ -26,8 +26,8 @@
                     </div>
                 </div>
 
-                <template for:each={events} for:item="eachevent">
-                    <lightning-card key={eachevent.id}
+                <template for:each={events} for:item="event">
+                    <lightning-card key={event.id}
                                     class="slds-p-left_medium slds-p-right_small">
                         <h3 slot="title">
                             <span class="slds-p-right_small">
@@ -35,19 +35,19 @@
 
                                 </lightning-icon>
                             </span>
-                            {eachevent.title}
+                            {event.title}
                         </h3>
                         <lightning-button-icon icon-name="action:remove" slot="actions"
                                                alternative-text="remove" title="Remove"
-                                               value={eachevent.id} size="small"
+                                               value={event.id} size="small"
                                                onclick={removeEvent}>
 
                         </lightning-button-icon>
 
-                        <p class="slds-p-horizontal_small"> Start: <lightning-formatted-date-time value={eachevent.start} year="numeric" month="numeric" day="numeric" hour="2-digit"
+                        <p class="slds-p-horizontal_small"> Start: <lightning-formatted-date-time value={event.start} year="numeric" month="2-digit" day="numeric" hour="2-digit"
                                                                                                   minute="2-digit" time-zone="GMT" time-zone-name="short" hour12="true"></lightning-formatted-date-time></p>
 
-                        <p class="slds-p-horizontal_small">End <lightning-formatted-date-time value={eachevent.end} year="numeric" month="numeric" day="numeric" hour="2-digit"
+                        <p class="slds-p-horizontal_small">End <lightning-formatted-date-time value={event.end} year="numeric" month="2-digit" day="numeric" hour="2-digit"
                                                                                               minute="2-digit" time-zone="GMT" time-zone-name="short" hour12="true"></lightning-formatted-date-time></p>
 
                     </lightning-card>
