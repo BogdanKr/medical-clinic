@@ -33,6 +33,7 @@ public with sharing class GoogleCalendarService {
             List<EventWrapper> result = (List<EventWrapper>) JSON.deserialize(replaceReservedIdentifiers(resultBody, true),
                     List<EventWrapper>.class);
             System.debug('result = ' + result);
+            convertTime(result);
             for (EventWrapper event : result) {
                 System.debug('ID= ' + event.id + 'Summary - ' + event.summary + ', Start time - ' + event.start +
                         ', End time - ' + event.end_c + ', Attendees - ' + event.attendees);
@@ -41,6 +42,17 @@ public with sharing class GoogleCalendarService {
 //            return new List<EventWrapper>{result.get(0)};
         }
         throw new CalloutException('Events where not received');
+    }
+
+    private static void convertTime(List<EventWrapper> events) {
+        for (EventWrapper event : events) {
+            if (event.start != null) {
+                event.start.dateTime_c = event.start.dateTime_c?.addHours(-5);
+            }
+            if (event.end_c != null) {
+                event.end_c.dateTime_c = event.end_c.dateTime_c?.addHours(-5);
+            }
+        }
     }
 
     public static void getEventById(String eventId) {
@@ -57,34 +69,69 @@ public with sharing class GoogleCalendarService {
             }
         }
     }
-
-    public static void deleteEventById(String eventId) {
-        String docEmail = 'James.Black.doc@gmail.com';
-        HttpResponse response = sendRequest(docEmail, ENDPOINT + '/' + eventId, DELETE_METHOD, null);
-        System.debug('response =>' + response);
-        if (response.getStatusCode() == 204) {
-            System.debug('Event Deleted');
+    @AuraEnabled
+    public static void deleteEventById(String removeObj) {
+        Map<String, Object> eventMap = (Map<String, Object>) JSON.deserializeUntyped(removeObj);
+        String eventId = eventMap.get('id')?.toString();
+        String doctorId = eventMap.get('doctorId')?.toString();
+        System.debug('EventId = ' + eventId + ' DoctorId = ' + doctorId);
+        System.debug('Event MAP = ' + eventMap);
+        if (eventId != null && doctorId != null) {
+//            String docEmail = 'James.Black.doc@gmail.com';
+            String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
+            HttpResponse response = sendRequest(docEmail, ENDPOINT + '/' + eventId, DELETE_METHOD, null);
+            System.debug('response =>' + response);
+            if (response.getStatusCode() == 204) {
+                System.debug('Event Deleted');
+//                return 'Event Deleted';
+            }else {
+                throw new CalloutException(response.getBody());
+            }
+        } else {
+            throw new IllegalArgumentException('Event id is not passed');
         }
     }
 
-    public static void createEvent() {
-        String docEmail = 'James.Black.doc@gmail.com';
-        EventWrapper event = new EventWrapper();
-        event.summary = 'New event REST api';
-        event.description = 'testing custom API service';
-        event.start = new DateTimeWrapper(System.now(), 'America/New_York');
-        event.end_c = new DateTimeWrapper(System.now().addMinutes(10), 'America/New_York');
-        event.attendees = new List<GoogleCalendarService.AttendeeWrapper>{
-                new AttendeeWrapper('test@test.com', 'new client', true, 'accepted')
-        };
-        String json = JSON.serialize(event);
-        json = replaceReservedIdentifiers(json, false);
-        System.debug('Serialized object = ' + json);
-
-        HttpResponse response = sendRequest(docEmail, ENDPOINT, POST_METHOD, json);
+    @AuraEnabled
+    public static String upsertEvent(String obj) {
+//        String docEmail = 'James.Black.doc@gmail.com';
+        EventWrapper event = convertToEvent(obj);
+        String docEmail = [SELECT Email FROM Contact WHERE Id = :event.doctorId].Email;
+//        event.attendees = new List<GoogleCalendarService.AttendeeWrapper>{
+//                new AttendeeWrapper('test@test.com', 'new client', true, 'accepted')
+//        };
+        String jsonEvent = JSON.serialize(event);
+        jsonEvent = replaceReservedIdentifiers(jsonEvent, false);
+        System.debug('Serialized object = ' + jsonEvent);
+        System.debug('event id from upsert - ' + event.id);
+        HttpResponse response = sendRequest(docEmail, ENDPOINT + '/' + event.id , event.id == '' ? POST_METHOD : PUT_METHOD, jsonEvent);
 
         System.debug('Create response == ' + response);
         System.debug('Create response body == ' + response.getBody());
+        if (response.getStatusCode() == 200) {
+            EventWrapper result = (EventWrapper) JSON.deserialize(replaceReservedIdentifiers(response.getBody(), true), EventWrapper.class);
+            return result.id;
+        } else {
+            throw new CalloutException(response.getBody());
+        }
+    }
+
+    private static EventWrapper convertToEvent(String event) {
+        Map<String, Object> eventMap = (Map<String, Object>) JSON.deserializeUntyped(event);
+        EventWrapper newEvent = new EventWrapper();
+        newEvent.id = eventMap.get('id')?.toString();
+        newEvent.summary = eventMap.get('title')?.toString();
+        newEvent.description = eventMap.get('description')?.toString();
+        newEvent.doctorId = eventMap.get('doctorId')?.toString();
+        System.debug('Start time from ui -' + eventMap.get('start'));
+        String startDate = eventMap.get('start')?.toString().replace('T', ' ').replace('.000Z', '');
+        String endDate = eventMap.get('end')?.toString().replace('T', ' ').replace('.000Z', '');
+        newEvent.start = new DateTimeWrapper(startDate != null ? Datetime.valueOfGmt(startDate) : null, 'America/New_York');
+        newEvent.start.dateTime_c = newEvent.start.dateTime_c.addHours(5);
+        System.debug('Start after convert -' + newEvent.start);
+        newEvent.end_c = new DateTimeWrapper(endDate != null ? Datetime.valueOfGmt(endDate) : null, 'America/New_York');
+        newEvent.end_c.dateTime_c = newEvent.end_c.dateTime_c.addHours(5);
+        return newEvent;
     }
 
     public static void updateEventById() {
@@ -196,6 +243,8 @@ public with sharing class GoogleCalendarService {
         public String kind { get; }
         @AuraEnabled
         public String id { get; set; }
+        @AuraEnabled
+        public String doctorId { get; set; }
         @AuraEnabled
         public String htmlLink { get; }
         @AuraEnabled

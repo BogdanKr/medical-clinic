@@ -5,9 +5,9 @@
 <!-- Full Calendar -->
 <template>
     <!-- Spinner to show on waiting screens -->
-    <template if:true={openSpinner}>
-        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
-    </template>
+<!--    <template if:true={openSpinner}>-->
+<!--        <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>-->
+<!--    </template>-->
 
     <div class="slds-grid slds-wrap slds-theme_default">
         <div class="slds-col slds-size_3-of-12">
@@ -86,6 +86,7 @@
                     <div class="slds-modal__content slds-p-around_medium"
                          id="modal-content-id-1">
                         <lightning-input label="Title" name="title" type="text" required onkeyup={handleKeyup} value={title}></lightning-input>
+                        <lightning-textarea label="Description" name="description" value={description}></lightning-textarea>
                         <lightning-input label="Start Date" name="start" type="datetime" required value={startDate}></lightning-input>
                         <lightning-input label="End Date" name="end" type="datetime" required value={endDate}></lightning-input>
                     </div>
@@ -93,6 +94,10 @@
                         <lightning-button-group>
                             <lightning-button label="Close" title="Close" icon-name="utility:close" onclick={handleCancel}></lightning-button>
                             <lightning-button label="Save" title="Save" variant="brand" icon-name="utility:save" onclick={handleSave}></lightning-button>
+                            <template if:true={eventId}>
+                                <lightning-button label="Remove" title="Remove" variant="brand" icon-name="utility:remove"
+                                                  value={eventId} onclick={removeEvent}></lightning-button>
+                            </template>
                         </lightning-button-group>
 
                     </footer>
