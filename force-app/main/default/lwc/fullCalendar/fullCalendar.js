@@ -13,6 +13,7 @@ import DOCMC from '@salesforce/messageChannel/DoctorMessageChannel__c';
 import getDoctorEvents from '@salesforce/apex/GoogleCalendarService.getPrimaryCalendarEventsByDoctor'
 import upsertEvent from '@salesforce/apex/GoogleCalendarService.upsertEvent';
 import deleteEvent from '@salesforce/apex/GoogleCalendarService.deleteEventById';
+import getClients from '@salesforce/apex/AppointmentService.getClients';
 
 export default class FullCalendar extends LightningElement {
     //To avoid the recursion from renderedcallback
@@ -384,5 +385,26 @@ export default class FullCalendar extends LightningElement {
 
     connectedCallback() {
         this.subscribeMC();
+    }
+
+
+    selectedClientId = '';
+    clients;
+
+    @wire(getClients)
+    getClients({error, data}) {
+        if (data) {
+            this.clients = data.map(client => {
+                return {label: client.Name, value: client.Id};
+            });
+            this.clients.unshift({label: 'All Clients', value: ''});
+        } else if (error) {
+            this.clients = undefined;
+            this.error = error;
+        }
+    }
+
+    handleClientChange(event) {
+        this.selectedClientId = event.detail.value;
     }
 }

@@ -18,6 +18,7 @@
         <members>MetadataService</members>
         <members>GoogleCalendarService</members>
         <members>DoctorDataService</members>
+        <members>AppointmentService</members>
         <name>ApexClass</name>
     </types>
     <types>
