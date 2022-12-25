@@ -12,22 +12,21 @@ public with sharing class GoogleCalendarService {
     static String ACCESS_TOKEN;
     static Boolean IS_TOKEN_REFRESHED;
 
-    public static void getCalendarList() {
-        String docEmail = 'James.Black.doc@gmail.com';
-        HttpResponse response = sendRequest(docEmail, ENDPOINT_CALENDAR_LIST, GET_METHOD, null);
-        System.debug('response =>' + response);
-        System.debug('response body ==>' + response.getBody());
-        getPrimaryCalendar(response);
-    }
+//    public static void getCalendarList() {
+//        String docEmail = 'James.Black.doc@gmail.com';
+//        HttpResponse response = sendRequest(docEmail, ENDPOINT_CALENDAR_LIST, GET_METHOD, null);
+//        System.debug('response =>' + response);
+//        System.debug('response body ==>' + response.getBody());
+//        getPrimaryCalendar(response);
+//    }
 
     @AuraEnabled(Cacheable=true)
     public static List<EventWrapper> getPrimaryCalendarEventsByDoctor(String doctorId) {
-//        String docEmail = 'James.Black.doc@gmail.com';
         String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
         if (docEmail == '') {
             return new List<EventWrapper>();
         }
-        System.debug('Doc Id == >'  + doctorId);
+        System.debug('Doc Id == >' + doctorId);
         HttpResponse response = sendRequest(docEmail, ENDPOINT, GET_METHOD, null);
         System.debug('response =>' + response);
         System.debug('response body = ' + response.getBody());
@@ -72,6 +71,7 @@ public with sharing class GoogleCalendarService {
             }
         }
     }
+
     @AuraEnabled
     public static void deleteEventById(String removeObj) {
         Map<String, Object> eventMap = (Map<String, Object>) JSON.deserializeUntyped(removeObj);
@@ -122,6 +122,11 @@ public with sharing class GoogleCalendarService {
         newEvent.summary = eventMap.get('title')?.toString();
         newEvent.description = eventMap.get('description')?.toString();
         newEvent.doctorId = eventMap.get('doctorId')?.toString();
+        String clientEmail = eventMap.get('clientEmail')?.toString();
+        Contact client = [SELECT Name FROM Contact WHERE Email = :clientEmail AND RecordType.DeveloperName = 'Client_Record_Type'].get(0);
+        newEvent.attendees = new List<GoogleCalendarService.AttendeeWrapper>{
+                new AttendeeWrapper(clientEmail, client.Name, false, 'needsAction')
+        };
         System.debug('Start time from ui -' + eventMap.get('start'));
         String startDate = eventMap.get('start')?.toString().replace('T', ' ').replace('.000Z', '');
         String endDate = eventMap.get('end')?.toString().replace('T', ' ').replace('.000Z', '');

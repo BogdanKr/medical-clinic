@@ -24,6 +24,7 @@ export default class FullCalendar extends LightningElement {
     description = '';
     startDate = new Date();
     endDate = new Date();
+    clientName = '';
 
     eventsRendered = false;//To render initial events only once
     // openSpinner = false; //To open the spinner in waiting screens
@@ -47,14 +48,24 @@ export default class FullCalendar extends LightningElement {
             this.eventOriginalData = value; //To use in refresh cache
             //format as fullcalendar event object
             console.log(data);
+
             let events = data.map(event => {
+                let clEmail;
+                let clName;
+                if (event.attendees != null){
+                    console.log('event attendee email - ' + event.attendees[0].email + ' name ' + event.attendees[0].displayName);
+                    clEmail = event.attendees[0].email;
+                    clName = event.attendees[0].displayName;
+                }
                 return {
                     id: event.id,
                     title: event.summary,
                     description: event.description,
                     start: event.start.dateTime_c,
                     end: event.end_c.dateTime_c,
-                    allDay: false
+                    allDay: false,
+                    clientEmail: clEmail,
+                    clientName: clName
                 };
             });
             this.events = [];
@@ -122,13 +133,15 @@ export default class FullCalendar extends LightningElement {
         let self = this;
 
         //To open the form with predefined fields
-        function openActivityForm(eventId, title, description, startDate, endDate) {
+        function openActivityForm(eventId, title, description, startDate, endDate, clientEmail, clientName) {
             self.eventId = eventId;
             self.title = title;
             self.description = description;
             self.startDate = startDate;
             self.endDate = endDate;
             self.openModal = true;
+            self.selectedClientEmail = clientEmail;
+            self.clientName = clientName;
         }
 
         function setMyEvent(event) {
@@ -140,7 +153,8 @@ export default class FullCalendar extends LightningElement {
 
             let newEvent = {
                 id: event.id, title: event.title, description: event.description,
-                start: event.start, end: event.end, doctorId: self.doctorId
+                start: event.start, end: event.end, doctorId: self.doctorId,
+                clientEmail: self.selectedClientEmail
             };
             console.log('process drag update = ' + newEvent.title);
             upsertEvent({'obj': JSON.stringify(newEvent)})
@@ -186,12 +200,13 @@ export default class FullCalendar extends LightningElement {
             select: function (startDate, endDate) {
                 let stDate = startDate.format();
                 let edDate = endDate.format();
-                openActivityForm('', '', '', stDate, edDate);
+                openActivityForm('', '', '', stDate, edDate, '', '');
             },
             eventLimit: true, // allow "more" link when too many events
             events: this.events, // all the events that are to be rendered - can be a duplicate statement here
             eventClick: function (calEvent, jsEvent, view) {
-                openActivityForm(calEvent.id, calEvent.title, calEvent.description, calEvent.start.format(), calEvent.end.format());
+                openActivityForm(calEvent.id, calEvent.title, calEvent.description, calEvent.start.format(), calEvent.end.format(),
+                    calEvent.clientEmail, calEvent.clientName);
                 setMyEvent(calEvent);
                 // change the border color
                 $(this).css('border-color', 'red');
@@ -199,7 +214,6 @@ export default class FullCalendar extends LightningElement {
         });
     }
 
-    //TODO: add the logic to support multiple input texts
     handleKeyup(event) {
         this.title = event.target.value;
     }
@@ -236,11 +250,13 @@ export default class FullCalendar extends LightningElement {
         console.log('MyEvent = ' + this.myEvent);
         this.myEvent.title = this.title;
         this.myEvent.description = this.description;
+        this.myEvent.clientEmail = this.selectedClientEmail;
 
         //format as per fullcalendar event object to create and render
         let newEvent = {
             id: this.eventId, title: this.title, description: this.description,
-            start: this.startDate, end: this.endDate, doctorId: this.doctorId
+            start: this.startDate, end: this.endDate, doctorId: this.doctorId,
+            clientEmail: this.selectedClientEmail
         };
 
         //Close the modal
@@ -263,7 +279,7 @@ export default class FullCalendar extends LightningElement {
 
                 if (isUpdated) {
                     console.log('updated this.myEvent Id 3- ' + this.myEvent.id + ' this.myEvent title - ' + this.myEvent.title);
-                    console.log('updated this.myEvent startTime !! ' + this.myEvent.start.format() + ' this.myEvent endTime - ' + this.myEvent.end.format());
+                    console.log('myEvent client Email - ' + this.myEvent.clientEmail);
                     $(ele).fullCalendar('updateEvent', newEvent);
                     $(ele).fullCalendar('updateEvent', this.myEvent);
                     this.openModal = false;
@@ -284,8 +300,6 @@ export default class FullCalendar extends LightningElement {
             })
             .catch(error => {
                 console.log(error);
-                // this.openSpinner = false;
-                //show toast message - TODO
                 this.showNotification('Oops', 'Something went wrong, please review console', 'error');
             })
     }
@@ -295,9 +309,6 @@ export default class FullCalendar extends LightningElement {
      * @documentation: https://fullcalendar.io/docs/v3/removeEvents
      */
     removeEvent(event) {
-        //open the spinner
-        // this.openSpinner = true;
-        // console.log('spinner is - ' + this.openSpinner);
         //delete the event from server and then remove from UI
         let eventId = event.target.value;
         let removeObj = {id: eventId, doctorId: this.doctorId};
@@ -339,6 +350,7 @@ export default class FullCalendar extends LightningElement {
         this.title = null;
         this.eventId = null;
         this.description = null;
+        this.selectedClientEmail = null;
         this.openModal = true;
     }
 
@@ -388,14 +400,14 @@ export default class FullCalendar extends LightningElement {
     }
 
 
-    selectedClientId = '';
+    selectedClientEmail = '';
     clients;
 
     @wire(getClients)
     getClients({error, data}) {
         if (data) {
             this.clients = data.map(client => {
-                return {label: client.Name, value: client.Id};
+                return {label: 'Name - ' + client.Name + ', Email - ' + client.Email, value: client.Email};
             });
             this.clients.unshift({label: 'All Clients', value: ''});
         } else if (error) {
@@ -405,6 +417,6 @@ export default class FullCalendar extends LightningElement {
     }
 
     handleClientChange(event) {
-        this.selectedClientId = event.detail.value;
+        this.selectedClientEmail = event.detail.value;
     }
 }
