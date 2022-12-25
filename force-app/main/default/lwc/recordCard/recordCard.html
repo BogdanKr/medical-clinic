@@ -10,9 +10,12 @@
         <div class="lower-third">
             <!-- Specialization information goes here -->
             <h1 class="slds-truncate slds-text-heading_medium">{record.Name}</h1>
-            <div class=slds-text-body_small> Appointment price :
-                <lightning-formatted-number value={record.Appointment_price__c}
-                                            maximum-fraction-digits="2"></lightning-formatted-number>
+            <div class=slds-text-body_small>
+                <template if:true={showPrice}>
+                    Appointment price :
+                    <lightning-formatted-number value={record.Appointment_price__c}
+                                                maximum-fraction-digits="2"></lightning-formatted-number>
+                </template>
             </div>
         </div>
     </div>

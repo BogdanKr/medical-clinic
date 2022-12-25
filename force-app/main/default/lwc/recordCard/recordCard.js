@@ -3,11 +3,13 @@
  */
 
 import {api, LightningElement} from 'lwc';
+
 const TILE_WRAPPER_SELECTED_CLASS = 'tile-wrapper selected';
 const TILE_WRAPPER_UNSELECTED_CLASS = 'tile-wrapper';
 
 export default class RecordCard extends LightningElement {
     @api record;
+    @api showPrice = null;
     changeStyle = false;
 
     // Getter for dynamically setting the background image for the picture
@@ -20,11 +22,11 @@ export default class RecordCard extends LightningElement {
         return this.changeStyle ? TILE_WRAPPER_SELECTED_CLASS : TILE_WRAPPER_UNSELECTED_CLASS;
     }
 
-    get tile(){
+    get tile() {
         return this.record.Image_Url__c ? 'tile' : '';
     }
 
-    setClass(){
+    setClass() {
         this.changeStyle = !this.changeStyle;
     }
 
@@ -32,7 +34,7 @@ export default class RecordCard extends LightningElement {
     handleChosenRecord() {
         console.log('onclick card event - ' + this.record.Id)
         const searchEvent = new CustomEvent('recordselect', {
-            detail: { recordId: this.record.Id}
+            detail: {recordId: this.record.Id}
         });
         this.dispatchEvent(searchEvent);
     }

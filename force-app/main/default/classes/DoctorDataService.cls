@@ -11,8 +11,6 @@ public with sharing class DoctorDataService {
 
     @AuraEnabled(Cacheable=true)
     public static List<Contact> getDoctors(String specializationId) {
-        // Without an explicit boatTypeId, the full list is desired
-//        [SELECT id from Contact WHERE RecordType.DeveloperName = 'Doctor_Record_Type']
         String query = 'SELECT Id, Name, Image_Url__c FROM Contact WHERE RecordType.DeveloperName = \'Doctor_Record_Type\'';
         if (String.isNotBlank(specializationId)) {
             query += ' AND Specialization__c =:specializationId';

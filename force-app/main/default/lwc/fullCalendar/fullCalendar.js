@@ -19,8 +19,8 @@ export default class FullCalendar extends LightningElement {
     fullCalendarJsInitialised = false;
 
     //Fields to store the event data -- add all other fields you want to add
-    title='';
-    description='';
+    title = '';
+    description = '';
     startDate = new Date();
     endDate = new Date();
 
@@ -30,7 +30,7 @@ export default class FullCalendar extends LightningElement {
 
     doctorId;
     eventId = '';
-    myEvent;
+    myEvent = {};
 
     @track
     events = []; //all calendar events are stored in this field
@@ -277,11 +277,9 @@ export default class FullCalendar extends LightningElement {
                     $(ele).fullCalendar('renderEvent', newEvent, true);
                     //To display on UI with id from server
                     this.events.push(newEvent);
+                    this.showNotification('Success!!', 'Your event has been logged', 'success');
+                    return refreshApex(this.eventOriginalData);
                 }
-                //To close spinner and modal
-                // this.openSpinner = false;
-                //show toast message
-                this.showNotification('Success!!', 'Your event has been logged', 'success');
             })
             .catch(error => {
                 console.log(error);
@@ -338,6 +336,8 @@ export default class FullCalendar extends LightningElement {
         this.startDate = null;
         this.endDate = null;
         this.title = null;
+        this.eventId = null;
+        this.description = null;
         this.openModal = true;
     }
 

@@ -12,7 +12,7 @@ export default class SpecializationList extends LightningElement {
 
     // Wire a custom Apex method
     @wire(getSpecializations)
-    boatTypes({error, data}) {
+    getSpecializations({error, data}) {
         if (data) {
             this.specializations = data
         } else if (error) {

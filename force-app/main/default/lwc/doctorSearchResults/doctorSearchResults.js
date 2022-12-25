@@ -38,7 +38,7 @@ export default class DoctorSearchResults extends LightningElement {
 
     // Publishes the selected Doctor Id on the DOC message channel.
     sendMessageService(selectedDoctorId) {
-        // explicitly pass boatId to the parameter recordId
+        // explicitly pass doctorId to the parameter recordId
         const payload = {recordId: selectedDoctorId};
         console.log('publishing message recId - ' + selectedDoctorId);
         publish(this.messageContext, DOCMC, payload);
