@@ -96,10 +96,7 @@ public with sharing class GoogleCalendarService {
     @AuraEnabled
     public static String upsertEvent(String obj) {
         EventWrapper event = convertToEvent(obj);
-        String docEmail = [SELECT Email FROM Contact WHERE Id = :event.doctorId].Email;
-//        event.attendees = new List<GoogleCalendarService.AttendeeWrapper>{
-//                new AttendeeWrapper('test@test.com', 'new client', true, 'accepted')
-//        };
+        String docEmail = [SELECT Id, Email FROM Contact WHERE Id = :event.doctorId].Email;
         String jsonEvent = JSON.serialize(event);
         jsonEvent = replaceReservedIdentifiers(jsonEvent, false);
         System.debug('Serialized object = ' + jsonEvent);
@@ -109,6 +106,8 @@ public with sharing class GoogleCalendarService {
         System.debug('Create response body == ' + response.getBody());
         if (response.getStatusCode() == 200) {
             EventWrapper result = (EventWrapper) JSON.deserialize(replaceReservedIdentifiers(response.getBody(), true), EventWrapper.class);
+            event.id = result.id;
+            AppointmentService.upsertAppointmentFromEventWrapper(event);
             return result.id;
         } else {
             throw new CalloutException(response.getBody());
@@ -122,8 +121,13 @@ public with sharing class GoogleCalendarService {
         newEvent.summary = eventMap.get('title')?.toString();
         newEvent.description = eventMap.get('description')?.toString();
         newEvent.doctorId = eventMap.get('doctorId')?.toString();
+        newEvent.isSalesforceProcess = (Boolean) eventMap.get('isSalesforceProcess');
         String clientEmail = eventMap.get('clientEmail')?.toString();
-        Contact client = [SELECT Name FROM Contact WHERE Email = :clientEmail AND RecordType.DeveloperName = 'Client_Record_Type'].get(0);
+        List<Contact> clients = [SELECT Id, Name FROM Contact WHERE Email = :clientEmail AND RecordType.DeveloperName = 'Client_Record_Type'];
+        if (clients.isEmpty()) {
+            throw new IllegalArgumentException('Client is not selected');
+        }
+        Contact client = clients.get(0);
         newEvent.attendees = new List<GoogleCalendarService.AttendeeWrapper>{
                 new AttendeeWrapper(clientEmail, client.Name, false, 'needsAction')
         };
@@ -135,6 +139,7 @@ public with sharing class GoogleCalendarService {
         System.debug('Start after convert -' + newEvent.start);
         newEvent.end_c = new DateTimeWrapper(endDate != null ? Datetime.valueOfGmt(endDate) : null, 'America/New_York');
         newEvent.end_c.dateTime_c = newEvent.end_c.dateTime_c.addHours(5);
+        newEvent.clientId = client.Id;
         return newEvent;
     }
 
@@ -252,6 +257,7 @@ public with sharing class GoogleCalendarService {
         public String id { get; set; }
         @AuraEnabled
         public String doctorId { get; set; }
+        public Id clientId { get; set; }
         @AuraEnabled
         public String htmlLink { get; }
         @AuraEnabled
@@ -272,6 +278,8 @@ public with sharing class GoogleCalendarService {
         public String iCalUID { get; }
         @AuraEnabled
         public List<AttendeeWrapper> attendees { get; set; }
+        @AuraEnabled
+        public Boolean isSalesforceProcess { get; set; }
     }
 
     public class DateTimeWrapper {

@@ -119,7 +119,7 @@ export default class FullCalendar extends LightningElement {
             })
             .catch((error) => {
                 console.error({
-                    message: "Error occured on FullCalendarJS",
+                    message: "Error occurred on FullCalendarJS",
                     error,
                 });
             });
@@ -154,7 +154,7 @@ export default class FullCalendar extends LightningElement {
             let newEvent = {
                 id: event.id, title: event.title, description: event.description,
                 start: event.start, end: event.end, doctorId: self.doctorId,
-                clientEmail: self.selectedClientEmail
+                clientEmail: self.selectedClientEmail, isSalesforceProcess: true
             };
             console.log('process drag update = ' + newEvent.title);
             upsertEvent({'obj': JSON.stringify(newEvent)})
@@ -165,7 +165,14 @@ export default class FullCalendar extends LightningElement {
                 })
                 .catch(error => {
                     console.log(error);
-                    self.showNotification('Oops', 'Something went wrong, please review console', 'error');
+                    this.error = 'No events are found';
+                    if (Array.isArray(error.body)) {
+                        this.error = error.body.map(e => e.message).join(', ');
+                    } else if (typeof error.body.message === 'string') {
+                        this.error = error.body.message;
+                    }
+                    self.showNotification('Oops', this.error, 'error');
+                    // self.showNotification('Oops', 'Something went wrong, please review console', 'error');
                 })
         }
 
@@ -256,7 +263,7 @@ export default class FullCalendar extends LightningElement {
         let newEvent = {
             id: this.eventId, title: this.title, description: this.description,
             start: this.startDate, end: this.endDate, doctorId: this.doctorId,
-            clientEmail: this.selectedClientEmail
+            clientEmail: this.selectedClientEmail, isSalesforceProcess:true
         };
 
         //Close the modal
@@ -300,7 +307,14 @@ export default class FullCalendar extends LightningElement {
             })
             .catch(error => {
                 console.log(error);
-                this.showNotification('Oops', 'Something went wrong, please review console', 'error');
+                this.error = 'Error with record creation';
+                if (Array.isArray(error.body)) {
+                    this.error = error.body.map(e => e.message).join(', ');
+                } else if (typeof error.body.message === 'string') {
+                    this.error = error.body.message;
+                }
+                this.showNotification('Oops', this.error, 'error');
+                // this.showNotification('Oops', 'Something went wrong, please review console', 'error');
             })
     }
 
