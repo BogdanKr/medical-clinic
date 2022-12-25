@@ -6,28 +6,29 @@ import {LightningElement, track, wire} from 'lwc';
 import {loadScript, loadStyle} from 'lightning/platformResourceLoader';
 import {ShowToastEvent} from 'lightning/platformShowToastEvent';
 import FullCalendarJS from '@salesforce/resourceUrl/FullCalendarJS2';
-// import fetchEvents from '@salesforce/apex/FullCalendarController.fetchEvents';
+import {refreshApex} from '@salesforce/apex';
+import {APPLICATION_SCOPE, MessageContext, subscribe} from "lightning/messageService";
+import DOCMC from '@salesforce/messageChannel/DoctorMessageChannel__c';
 
 import getDoctorEvents from '@salesforce/apex/GoogleCalendarService.getPrimaryCalendarEventsByDoctor'
 import upsertEvent from '@salesforce/apex/GoogleCalendarService.upsertEvent';
 import deleteEvent from '@salesforce/apex/GoogleCalendarService.deleteEventById';
-import {refreshApex} from '@salesforce/apex';
 
 export default class FullCalendar extends LightningElement {
     //To avoid the recursion from renderedcallback
     fullCalendarJsInitialised = false;
 
     //Fields to store the event data -- add all other fields you want to add
-    title;
-    description;
-    startDate;
-    endDate;
+    title='';
+    description='';
+    startDate = new Date();
+    endDate = new Date();
 
     eventsRendered = false;//To render initial events only once
-    openSpinner = false; //To open the spinner in waiting screens
+    // openSpinner = false; //To open the spinner in waiting screens
     openModal = false; //To open form
 
-    doctorId = '003Dn000007Ao8hIAC';
+    doctorId;
     eventId = '';
     myEvent;
 
@@ -40,10 +41,9 @@ export default class FullCalendar extends LightningElement {
     //Get data from server - in this example, it fetches from the event object
     @wire(getDoctorEvents, {doctorId: '$doctorId'})
     eventObj(value) {
-        this.eventOriginalData = value; //To use in refresh cache
-
         const {data, error} = value;
         if (data) {
+            this.eventOriginalData = value; //To use in refresh cache
             //format as fullcalendar event object
             console.log(data);
             let events = data.map(event => {
@@ -56,11 +56,12 @@ export default class FullCalendar extends LightningElement {
                     allDay: false
                 };
             });
+            this.events = [];
             this.events = JSON.parse(JSON.stringify(events));
             console.log(this.events);
             this.error = undefined;
-
             //load only on first wire call -
+
             // if events are not rendered, try to remove this 'if' condition and add directly
             if (!this.eventsRendered) {
                 //Add events to calendar
@@ -69,9 +70,17 @@ export default class FullCalendar extends LightningElement {
                 this.eventsRendered = true;
             }
         } else if (error) {
-            this.events = [];
             this.error = 'No events are found';
+            if (Array.isArray(error.body)) {
+                this.error = error.body.map(e => e.message).join(', ');
+            } else if (typeof error.body.message === 'string') {
+                this.error = error.body.message;
+            }
+            this.showNotification('Oops', this.error, 'error');
+            this.events = [];
         }
+        // console.log('refresh apex');
+        return refreshApex(this.eventOriginalData);
     }
 
     /**
@@ -112,7 +121,6 @@ export default class FullCalendar extends LightningElement {
         let self = this;
 
         //To open the form with predefined fields
-        //TODO: to be moved outside this function
         function openActivityForm(eventId, title, description, startDate, endDate) {
             self.eventId = eventId;
             self.title = title;
@@ -202,10 +210,9 @@ export default class FullCalendar extends LightningElement {
 
     //To save the event
     handleSave() {
-        this.openSpinner = true;
-
+        // this.openSpinner = true;
+        console.log('handle save fires');
         //get all the field values - as of now they all are mandatory to create a standard event
-        //TODO- you need to add your logic here.
         this.template.querySelectorAll('lightning-input').forEach(ele => {
             if (ele.name === 'title') {
                 this.title = ele.value;
@@ -272,13 +279,13 @@ export default class FullCalendar extends LightningElement {
                     this.events.push(newEvent);
                 }
                 //To close spinner and modal
-                this.openSpinner = false;
+                // this.openSpinner = false;
                 //show toast message
                 this.showNotification('Success!!', 'Your event has been logged', 'success');
             })
             .catch(error => {
                 console.log(error);
-                this.openSpinner = false;
+                // this.openSpinner = false;
                 //show toast message - TODO
                 this.showNotification('Oops', 'Something went wrong, please review console', 'error');
             })
@@ -290,8 +297,8 @@ export default class FullCalendar extends LightningElement {
      */
     removeEvent(event) {
         //open the spinner
-        this.openSpinner = true;
-        console.log('spinner is - ' + this.openSpinner);
+        // this.openSpinner = true;
+        // console.log('spinner is - ' + this.openSpinner);
         //delete the event from server and then remove from UI
         let eventId = event.target.value;
         let removeObj = {id: eventId, doctorId: this.doctorId};
@@ -304,7 +311,7 @@ export default class FullCalendar extends LightningElement {
                 console.log('delete EventId - ' + eventId);
                 $(ele).fullCalendar('removeEvents', [eventId]);
 
-                this.openSpinner = false;
+                // this.openSpinner = false;
                 this.openModal = false;
 
                 //refresh the grid
@@ -313,10 +320,15 @@ export default class FullCalendar extends LightningElement {
             })
             .catch(error => {
                 console.log('catch error log - ' + error);
-                this.openSpinner = false;
+                // this.openSpinner = false;
                 this.openModal = false;
                 this.showNotification('Oops', 'Something went wrong, please review console', 'error');
             });
+    }
+
+    clearCalendar() {
+        const ele = this.template.querySelector("div.fullcalendarjs");
+        $(ele).fullCalendar('removeEvents');
     }
 
     /**
@@ -340,5 +352,37 @@ export default class FullCalendar extends LightningElement {
             variant: variant,
         });
         this.dispatchEvent(evt);
+    }
+
+
+    @wire(MessageContext)
+    messageContext;
+    subscription = null;
+
+    // Subscribe to the message channel
+    subscribeMC() {
+        if (this.subscription) {
+            return;
+        }
+        this.subscription = subscribe(
+            this.messageContext,
+            DOCMC,
+            (message) => this.handleMessage(message),
+            {scope: APPLICATION_SCOPE}
+        );
+    }
+
+    // Handler for message received by component
+    handleMessage(message) {
+        if (this.doctorId !== message.recordId) {
+            console.log('Clear events and update doctor');
+            this.clearCalendar();
+            this.eventsRendered = false;
+            this.doctorId = message.recordId;
+        }
+    }
+
+    connectedCallback() {
+        this.subscribeMC();
     }
 }

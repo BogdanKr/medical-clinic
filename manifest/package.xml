@@ -18,7 +18,6 @@
         <members>MetadataService</members>
         <members>GoogleCalendarService</members>
         <members>DoctorDataService</members>
-        <members>FullCalendarController</members>
         <name>ApexClass</name>
     </types>
     <types>

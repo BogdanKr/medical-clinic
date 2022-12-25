@@ -13,6 +13,10 @@
     </template>
     <template if:true={wiredRecord.data}>
         <lightning-card title={doctorName} icon-name={detailsTabIconName}>
+            <div slot="actions">
+                <lightning-button label="Authorize Doctor" onclick={navigateToAuthPage}
+                                  class="slds-m-left_x-small"></lightning-button>
+            </div>
             <lightning-record-view-form
                     object-api-name="Contact"
                     record-id={doctorId}

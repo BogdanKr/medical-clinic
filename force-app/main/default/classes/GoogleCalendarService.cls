@@ -22,8 +22,12 @@ public with sharing class GoogleCalendarService {
 
     @AuraEnabled(Cacheable=true)
     public static List<EventWrapper> getPrimaryCalendarEventsByDoctor(String doctorId) {
-//        String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
-        String docEmail = 'James.Black.doc@gmail.com';
+//        String docEmail = 'James.Black.doc@gmail.com';
+        String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
+        if (docEmail == '') {
+            return new List<EventWrapper>();
+        }
+        System.debug('Doc Id == >'  + doctorId);
         HttpResponse response = sendRequest(docEmail, ENDPOINT, GET_METHOD, null);
         System.debug('response =>' + response);
         System.debug('response body = ' + response.getBody());
@@ -39,7 +43,6 @@ public with sharing class GoogleCalendarService {
                         ', End time - ' + event.end_c + ', Attendees - ' + event.attendees);
             }
             return result;
-//            return new List<EventWrapper>{result.get(0)};
         }
         throw new CalloutException('Events where not received');
     }
@@ -77,14 +80,12 @@ public with sharing class GoogleCalendarService {
         System.debug('EventId = ' + eventId + ' DoctorId = ' + doctorId);
         System.debug('Event MAP = ' + eventMap);
         if (eventId != null && doctorId != null) {
-//            String docEmail = 'James.Black.doc@gmail.com';
             String docEmail = [SELECT Email FROM Contact WHERE Id = :doctorId].Email;
             HttpResponse response = sendRequest(docEmail, ENDPOINT + '/' + eventId, DELETE_METHOD, null);
             System.debug('response =>' + response);
             if (response.getStatusCode() == 204) {
                 System.debug('Event Deleted');
-//                return 'Event Deleted';
-            }else {
+            } else {
                 throw new CalloutException(response.getBody());
             }
         } else {
@@ -94,7 +95,6 @@ public with sharing class GoogleCalendarService {
 
     @AuraEnabled
     public static String upsertEvent(String obj) {
-//        String docEmail = 'James.Black.doc@gmail.com';
         EventWrapper event = convertToEvent(obj);
         String docEmail = [SELECT Email FROM Contact WHERE Id = :event.doctorId].Email;
 //        event.attendees = new List<GoogleCalendarService.AttendeeWrapper>{
@@ -103,8 +103,7 @@ public with sharing class GoogleCalendarService {
         String jsonEvent = JSON.serialize(event);
         jsonEvent = replaceReservedIdentifiers(jsonEvent, false);
         System.debug('Serialized object = ' + jsonEvent);
-        System.debug('event id from upsert - ' + event.id);
-        HttpResponse response = sendRequest(docEmail, ENDPOINT + '/' + event.id , event.id == '' ? POST_METHOD : PUT_METHOD, jsonEvent);
+        HttpResponse response = sendRequest(docEmail, ENDPOINT + '/' + event.id, event.id == '' ? POST_METHOD : PUT_METHOD, jsonEvent);
 
         System.debug('Create response == ' + response);
         System.debug('Create response body == ' + response.getBody());
@@ -156,16 +155,16 @@ public with sharing class GoogleCalendarService {
     }
 
     private static HttpResponse sendRequest(String docEmail, String endpoint, String requestMethod, String body) {
-        GoogleAuthSetting__mdt tokenMetadata = getUsedMetadata(docEmail);
+        GoogleAuthSetting__mdt tokenMetadata = getUserMetadata(docEmail);
         Http http = new Http();
         HttpRequest request = new HttpRequest();
         request.setMethod(requestMethod);
         request.setEndpoint(endpoint);
         request.setHeader('content-type', 'application/json');
-//        request.setHeader('Accept', 'application/json');
         request.setHeader('Authorization', 'Bearer ' + ACCESS_TOKEN);
+        System.debug('Send request docEmail -> ' + docEmail);
+        System.debug('Request method - ' + requestMethod);
         if (requestMethod.equals(POST_METHOD) || requestMethod.equals(PUT_METHOD)) {
-            System.debug('Request method - ' + requestMethod);
             request.setBody(body);
         }
         HttpResponse response = http.send(request);
@@ -180,23 +179,26 @@ public with sharing class GoogleCalendarService {
         return response;
     }
 
-    private static GoogleAuthSetting__mdt getUsedMetadata(String docEmail) {
+    private static GoogleAuthSetting__mdt getUserMetadata(String docEmail) {
         IS_TOKEN_REFRESHED = false;
-        GoogleAuthSetting__mdt tokenMetadata = [
-                SELECT Doctor_email__c, RefreshToken__c, DeveloperName, Label, Client_Id__c, Client_Secret__c,
-                        Expiration_Time__c, AccessToken__c
+        List<GoogleAuthSetting__mdt> tokenMetadata = [
+                SELECT Doctor_email__c, RefreshToken__c, DeveloperName, Label, Expiration_Time__c, AccessToken__c
                 FROM GoogleAuthSetting__mdt
                 WHERE Doctor_email__c = :docEmail
         ];
-        System.debug('token time = ' + tokenMetadata.Expiration_Time__c);
-        System.debug('system  time = ' + System.now());
-        ACCESS_TOKEN = tokenMetadata.AccessToken__c;
-        if (tokenMetadata.Expiration_Time__c < System.now()) {
-            System.debug('Token has been expired');
-            ACCESS_TOKEN = GoogleAuthService.refreshAccessToken(docEmail);
-            IS_TOKEN_REFRESHED = true;
+        if (tokenMetadata.isEmpty()) {
+            throw new IllegalArgumentException('Doctors Calendar does not connected');
         }
-        return tokenMetadata;
+        System.debug('token time = ' + tokenMetadata.get(0).Expiration_Time__c);
+        System.debug('system  time = ' + System.now());
+        ACCESS_TOKEN = tokenMetadata.get(0).AccessToken__c;
+        if (tokenMetadata.get(0).Expiration_Time__c < System.now()) {
+            System.debug('Token has been expired');
+            ACCESS_TOKEN = GoogleAuthService.refreshAccessToken(tokenMetadata.get(0).RefreshToken__c);
+            IS_TOKEN_REFRESHED = true;
+            System.debug('Refreshed token ==>' + ACCESS_TOKEN);
+        }
+        return tokenMetadata.get(0);
     }
 
     private static CalendarWrapper getPrimaryCalendar(HttpResponse response) {

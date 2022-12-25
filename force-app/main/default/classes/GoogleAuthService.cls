@@ -3,35 +3,55 @@
  */
 
 public with sharing class GoogleAuthService {
-    //ClientId
-//    private static final String CLIENT_ID = '1009978681859-atp194qhmd4qvifm08hdvujr74j2i4a2.apps.googleusercontent.com';
-//    private static final String SECRET_ID = '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';
 
     private static final String REDIRECT_CLINIC = 'https://appointment-dev-ed.develop.lightning.force.com/lightning/n/Medical_Clinic';
     private static final String REDIRECT_URL = 'https://appointment-dev-ed--c.develop.vf.force.com/apex/GoogleAuth';
     private static final String AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
     private static final String SCOPE_EVENTS = 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly';
     public static final String TOKEN_URL = 'https://accounts.google.com/o/oauth2/token';
+    private static final String GOOGLE_CALENDAR_MDT = 'GoogleCalendarCreds';
 
     public static String CODE;
+    public static String CLIENT_ID;
+    public static String CLIENT_SECRET;
+    public static String CURRENT_DOC_EMAIL;
+    public static String CURRENT_DOC_NAME;
+
+    public GoogleAuthService() {
+        GoogleCalendarAppCred__mdt appCred = [
+                SELECT Client_Id__c, Client_Secret__c
+                FROM GoogleCalendarAppCred__mdt
+                WHERE DeveloperName = :GOOGLE_CALENDAR_MDT
+        ];
+        CLIENT_ID = appCred.Client_Id__c;
+        CLIENT_SECRET = appCred.Client_Secret__c;
+    }
+
+    @AuraEnabled
+    public static void setDocNameEmail(String docId){
+        Contact doc = [SELECT Name, Email, Is_Goggle_Cal__c FROM Contact WHERE Id =: docId];
+        CURRENT_DOC_EMAIL = doc.Email;
+        CURRENT_DOC_NAME = doc.Name;
+        doc.Is_Goggle_Cal__c = true;
+        update doc;
+        System.debug('Setting doc email - ' + CURRENT_DOC_EMAIL);
+        System.debug('Setting doc name - ' + CURRENT_DOC_NAME);
+    }
 
     public PageReference callAuth() {
-        String docEmail = 'James.Black.doc@gmail.com';
-        GoogleAuthSetting__mdt docAuthData = getDocAuthMetadata(docEmail);
         if (ApexPages.currentPage().getParameters().get('code') != null) {
             System.debug('code ===> ' + ApexPages.currentPage().getParameters().get('code'));
             CODE = ApexPages.currentPage().getParameters().get('code');
-//            return new PageReference('https://appointment-dev-ed.develop.lightning.force.com/lightning/n/Medical_Clinic');
             System.debug('AuthCode ==> ' + CODE);
-            getAccessToken(CODE, docAuthData.Client_Id__c, docAuthData.Client_Secret__c);
-            return null;
+            createAccessToken();
+            return new PageReference('https://appointment-dev-ed.develop.lightning.force.com/lightning/n/Medical_Clinic');
         } else {
-            return new PageReference(GoogleAuthService.createAuthURL(docAuthData.Client_Id__c));
+            return new PageReference(GoogleAuthService.createAuthURL());
         }
     }
 
-    private static String createAuthURL(String clientId) {
-        String key = EncodingUtil.urlEncode(clientId, 'UTF-8');
+    private static String createAuthURL() {
+        String key = EncodingUtil.urlEncode(CLIENT_ID, 'UTF-8');
         String uri = EncodingUtil.urlEncode(REDIRECT_URL, 'UTF-8');
         String authuri = '';
         authuri = AUTH_URL + '?' +
@@ -44,14 +64,21 @@ public with sharing class GoogleAuthService {
         return authuri;
     }
 
-    private static Boolean getAccessToken(String code, String clientId, String clientSecret) {
+    private static Boolean createAccessToken() {
+        Contact doc = [SELECT Id, Name, Email, Is_Goggle_Cal__c FROM Contact WHERE Is_Goggle_Cal__c = TRUE];
+        CURRENT_DOC_EMAIL = doc.Email;
+        CURRENT_DOC_NAME = doc.Name;
+        System.debug('CLIENT_ID ===> ' + CLIENT_ID);
+        System.debug('CLIENT_SECRET ===> ' + CLIENT_SECRET);
+        System.debug('CURRENT_DOC_EMAIL ===> ' + CURRENT_DOC_EMAIL);
+        System.debug('CURRENT_DOC_NAME ===> ' + CURRENT_DOC_NAME);
         //Getting access token from google
         HttpRequest req = new HttpRequest();
         req.setMethod('POST');
         req.setEndpoint(TOKEN_URL);
         req.setHeader('content-type', 'application/x-www-form-urlencoded');
-        String messageBody = 'code=' + code + '&client_id=' + clientId +
-                '&client_secret=' + clientSecret +
+        String messageBody = 'code=' + CODE + '&client_id=' + CLIENT_ID +
+                '&client_secret=' + CLIENT_SECRET +
                 '&redirect_uri=' + REDIRECT_URL +
                 '&grant_type=authorization_code';
         req.setHeader('Content-length', String.valueOf(messageBody.length()));
@@ -62,26 +89,36 @@ public with sharing class GoogleAuthService {
         HttpResponse response = http.send(req);
         responseText = response.getBody();
         Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseText) ;
+        System.debug('Response Map ==> ' + responseMap);
+
         String accessToken = String.valueOf(responseMap.get('access_token'));
         String refreshToken = String.valueOf(responseMap.get('refresh_token'));
+        setIsGoogleCalFalse(doc.Id);
 
 //        Create token in custom metadata
-        MetadataService.createCustomMetadata('James.Black.doc@gmail.com', 'James Black', accessToken, refreshToken);
+        MetadataService.createCustomMetadata(CURRENT_DOC_EMAIL, CURRENT_DOC_NAME, accessToken, refreshToken);
         return true;
     }
 
+    @Future
+    private static void setIsGoogleCalFalse(String id){
+        Contact doc = [SELECT Is_Goggle_Cal__c FROM Contact WHERE Is_Goggle_Cal__c = TRUE];
+        doc.Is_Goggle_Cal__c = false;
+        update doc;
+    }
 
-    public static String refreshAccessToken(String docEmail) {
-
+    public static String refreshAccessToken(String refreshToken) {
+        GoogleCalendarAppCred__mdt appCred = getAppCredentials();
+        CLIENT_ID = appCred.Client_Id__c;
+        CLIENT_SECRET = appCred.Client_Secret__c;
         //Getting access token from google
         HttpRequest req = new HttpRequest();
         req.setMethod('POST');
         req.setEndpoint(TOKEN_URL);
         req.setHeader('content-type', 'application/x-www-form-urlencoded');
-        GoogleAuthSetting__mdt docAuthData = getDocAuthMetadata(docEmail);
-        String messageBody = 'client_id=' + docAuthData.Client_Id__c +
-                '&client_secret=' + docAuthData.Client_Secret__c +
-                '&refresh_token=' + docAuthData.RefreshToken__c +
+        String messageBody = 'client_id=' + CLIENT_ID +
+                '&client_secret=' + CLIENT_SECRET +
+                '&refresh_token=' + refreshToken +
                 '&grant_type=refresh_token';
         req.setHeader('Content-length', String.valueOf(messageBody.length()));
         req.setBody(messageBody);
@@ -91,6 +128,9 @@ public with sharing class GoogleAuthService {
         HttpResponse response = http.send(req);
         responseText = response.getBody();
         Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(responseText) ;
+        System.debug('CLIENT_ID -> ' + CLIENT_ID);
+        System.debug('CLIENT_SECRET -> ' + CLIENT_SECRET);
+        System.debug('RefreshToken responseMap ==> ' + responseMap);
         String token = String.valueOf(responseMap.get('access_token'));
         return token;
     }
@@ -98,10 +138,17 @@ public with sharing class GoogleAuthService {
 
     private static GoogleAuthSetting__mdt getDocAuthMetadata(String email) {
         return [
-                SELECT Doctor_email__c, RefreshToken__c, DeveloperName, Label, Client_Id__c,
-                        Client_Secret__c, Expiration_Time__c, AccessToken__c
+                SELECT Doctor_email__c, RefreshToken__c, DeveloperName, Label, Expiration_Time__c, AccessToken__c
                 FROM GoogleAuthSetting__mdt
                 WHERE Doctor_email__c = :email
+        ];
+    }
+
+    private static GoogleCalendarAppCred__mdt getAppCredentials(){
+        return [
+                SELECT Client_Id__c, Client_Secret__c
+                FROM GoogleCalendarAppCred__mdt
+                WHERE DeveloperName = :GOOGLE_CALENDAR_MDT
         ];
     }
 }

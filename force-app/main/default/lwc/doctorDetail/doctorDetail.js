@@ -6,12 +6,14 @@ import {LightningElement, wire} from 'lwc';
 import {getFieldValue, getRecord} from "lightning/uiRecordApi";
 import {APPLICATION_SCOPE, MessageContext, subscribe} from "lightning/messageService";
 import DOCMC from '@salesforce/messageChannel/DoctorMessageChannel__c';
+import setDocNameEmail from '@salesforce/apex/GoogleAuthService.setDocNameEmail';
 import {NavigationMixin} from "lightning/navigation";
 
 // Contact Schema Imports
 import DOCTOR_ID_FIELD from '@salesforce/schema/Contact.Id';
 import DOCTOR_NAME_FIELD from '@salesforce/schema/Contact.Name';
 
+const AUTH_URL = 'https://appointment-dev-ed--c.develop.vf.force.com/apex/GoogleAuth';
 const DOCTOR_FIELDS = [DOCTOR_ID_FIELD, DOCTOR_NAME_FIELD];
 
 export default class DoctorDetail extends LightningElement {
@@ -21,12 +23,20 @@ export default class DoctorDetail extends LightningElement {
 
     // Decide when to show or hide the icon
     get detailsTabIconName() {
-        return this.wiredRecord.data ? 'standard:people' : null;
+        // return this.wiredRecord.data ? 'standard:people' : '';
+        return 'standard:people';
     }
 
     // Utilize getFieldValue to extract the doctor name from the record wire
     get doctorName() {
         return getFieldValue(this.wiredRecord.data, DOCTOR_NAME_FIELD);
+    }
+
+    navigateToAuthPage(){
+        console.log('passing doc id - ' + this.doctorId);
+        setDocNameEmail({ docId: this.doctorId });
+        console.log('Navigating to Auth page');
+        window.location.assign(AUTH_URL);
     }
 
     @wire(MessageContext)
