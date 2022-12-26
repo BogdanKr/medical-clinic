@@ -38,6 +38,7 @@ public with sharing class GoogleCalendarService {
             System.debug('result = ' + result);
             convertTime(result);
             for (EventWrapper event : result) {
+                event.doctorEmail = docEmail;
                 System.debug('ID= ' + event.id + 'Summary - ' + event.summary + ', Start time - ' + event.start +
                         ', End time - ' + event.end_c + ', Attendees - ' + event.attendees);
             }
@@ -257,6 +258,8 @@ public with sharing class GoogleCalendarService {
         public String id { get; set; }
         @AuraEnabled
         public String doctorId { get; set; }
+        @AuraEnabled
+        public String doctorEmail { get; set; }
         public Id clientId { get; set; }
         @AuraEnabled
         public String htmlLink { get; }

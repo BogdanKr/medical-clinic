@@ -27,7 +27,6 @@ export default class FullCalendar extends LightningElement {
     clientName = '';
 
     eventsRendered = false;//To render initial events only once
-    // openSpinner = false; //To open the spinner in waiting screens
     openModal = false; //To open form
 
     doctorId;
@@ -52,10 +51,14 @@ export default class FullCalendar extends LightningElement {
             let events = data.map(event => {
                 let clEmail;
                 let clName;
-                if (event.attendees != null){
+                if (event.attendees != null) {
                     console.log('event attendee email - ' + event.attendees[0].email + ' name ' + event.attendees[0].displayName);
                     clEmail = event.attendees[0].email;
                     clName = event.attendees[0].displayName;
+                    if (clEmail === event.doctorEmail && event.attendees.length > 1) {
+                        clEmail = event.attendees[1].email;
+                        clName = event.attendees[1].displayName;
+                    }
                 }
                 return {
                     id: event.id,
@@ -154,7 +157,7 @@ export default class FullCalendar extends LightningElement {
             let newEvent = {
                 id: event.id, title: event.title, description: event.description,
                 start: event.start, end: event.end, doctorId: self.doctorId,
-                clientEmail: self.selectedClientEmail, isSalesforceProcess: true
+                clientEmail: event.clientEmail, isSalesforceProcess: true
             };
             console.log('process drag update = ' + newEvent.title);
             upsertEvent({'obj': JSON.stringify(newEvent)})
@@ -165,12 +168,14 @@ export default class FullCalendar extends LightningElement {
                 })
                 .catch(error => {
                     console.log(error);
-                    this.error = 'No events are found';
+                    this.error = 'Something went wrong';
                     if (Array.isArray(error.body)) {
                         this.error = error.body.map(e => e.message).join(', ');
-                    } else if (typeof error.body.message === 'string') {
+                    } else
+                        if (typeof error.body.message === 'string') {
                         this.error = error.body.message;
                     }
+                        console.log('Show error toast')
                     self.showNotification('Oops', this.error, 'error');
                     // self.showNotification('Oops', 'Something went wrong, please review console', 'error');
                 })
@@ -263,7 +268,7 @@ export default class FullCalendar extends LightningElement {
         let newEvent = {
             id: this.eventId, title: this.title, description: this.description,
             start: this.startDate, end: this.endDate, doctorId: this.doctorId,
-            clientEmail: this.selectedClientEmail, isSalesforceProcess:true
+            clientEmail: this.selectedClientEmail, isSalesforceProcess: true
         };
 
         //Close the modal
@@ -372,7 +377,7 @@ export default class FullCalendar extends LightningElement {
      * @description method to show toast events
      */
     showNotification(title, message, variant) {
-        console.log('enter');
+        console.log('show toast');
         const evt = new ShowToastEvent({
             title: title,
             message: message,
@@ -417,7 +422,7 @@ export default class FullCalendar extends LightningElement {
     selectedClientEmail = '';
     clients;
 
-    @wire(getClients)
+    @wire(getClients, {doctorId: '$doctorId'})
     getClients({error, data}) {
         if (data) {
             this.clients = data.map(client => {
