@@ -163,20 +163,19 @@ export default class FullCalendar extends LightningElement {
             upsertEvent({'obj': JSON.stringify(newEvent)})
                 .then(() => {
                     self.showNotification('Success!!', 'Your event has been updated', 'success');
-                    //refresh the grid
                     return refreshApex(self.eventOriginalData);
                 })
                 .catch(error => {
-                    console.log(error);
-                    this.error = 'Something went wrong';
+                    console.log('error - ' + error.body);
+                    let err = 'Something went wrong';
                     if (Array.isArray(error.body)) {
-                        this.error = error.body.map(e => e.message).join(', ');
+                        err = error.body.map(e => e.message).join(', ');
                     } else
                         if (typeof error.body.message === 'string') {
-                        this.error = error.body.message;
+                            err = error.body.message;
                     }
                         console.log('Show error toast')
-                    self.showNotification('Oops', this.error, 'error');
+                    self.showNotification('Oops', err, 'error');
                     // self.showNotification('Oops', 'Something went wrong, please review console', 'error');
                 })
         }
@@ -280,7 +279,7 @@ export default class FullCalendar extends LightningElement {
         let isUpdated = this.eventId !== '';
         const ele = this.template.querySelector("div.fullcalendarjs");
         console.log('process makeUpsertToDB = ' + newEvent.title);
-        console.log('ele0 = ' + ele);
+        console.log('ele = ' + ele);
         //Server call to create or update the event
         upsertEvent({'obj': JSON.stringify(newEvent)})
             .then(result => {
@@ -339,11 +338,7 @@ export default class FullCalendar extends LightningElement {
                 console.log('ele = ' + ele);
                 console.log('delete EventId - ' + eventId);
                 $(ele).fullCalendar('removeEvents', [eventId]);
-
-                // this.openSpinner = false;
                 this.openModal = false;
-
-                //refresh the grid
                 this.showNotification('Success!!', 'Your event has deleted', 'success');
                 return refreshApex(this.eventOriginalData);
             })
